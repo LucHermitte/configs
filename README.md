@@ -8,4 +8,4 @@ Expect the configuration to be targeted at my vim plugins like
 
 Each project configuration will be stored in a dedicated branch.
 
- * [ITK/OTB](tree/OTB-ITK)
+ * [ITK/OTB](https://github.com/LucHermitte/configs/tree/OTB-ITK)
