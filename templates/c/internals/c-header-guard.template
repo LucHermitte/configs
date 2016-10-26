@@ -1,0 +1,2 @@
+VimL: "C/C++ "function" that builds header gates for ITK and OTB, Luc Hermitte
+VimL: let s:guard = substitute(expand('%:t'),'\c[^a-z0-9_]','_','g')

@@ -1,0 +1,3 @@
+VimL:" Specialisation of c/internals/register-file-kinds for ITK
+VimL: let s:c_patterns[5] = [ {"test": "expand('%:p')=~ '/test/'", "file": "c-test"}]
+VimL: let s:c_patterns[7] = [ {"test": "expand('%:e')=~ '^hh\\=$\\|^hxx$'", "file": "c-header"}]

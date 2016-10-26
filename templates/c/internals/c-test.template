@@ -1,0 +1,10 @@
+VimL:" Body of ITK test unit files
+VimL: let s:crt_name = expand('%:t:r')
+#include "<+s:crt_name+>.h"
+<+other includes+>
+
+int <+s:crt_name+>(int,char*[])
+{
+<++>
+  return EXIT_SUCCESS;
+}
