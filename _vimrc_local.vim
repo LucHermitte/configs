@@ -2,9 +2,9 @@
 "=============================================================================
 " File:         dev/(ITK|OTB)/_vimrc_local.vim  {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
-let s:k_version = 154
+let s:k_version = 188
 " Created:      04th Jun 2015
-" Last Update:26th Oct 2016
+" Last Update:28th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       Definition of vim's local options for the projects ITK and OTB
@@ -16,12 +16,16 @@ let s:k_version = 154
 " }}}1
 "=============================================================================
 
+" ######################################################################
 " Always loaded {{{1
+" Here goes settings from plugins that are not project aware :(
+
 " 2x:h -> remove file name -> move dir up from .config/
 let s:script_dir = expand('<sfile>:p:h:h')
 let s:config_dir = expand('<sfile>:p:h')
 let s:currently_edited_file = expand('%:p')
-let g:BTW_use_project = 1 " test old and new BTW interface w/ p: support
+call lh#let#to('g:BTW.use_project', 1) " test old and new BTW interface w/ p: support
+let lh#project.auto_detect = 0
 
 " Alternate configuration {{{2
 " let g:alternateSearchPath = 'reg:#\<src\>$#inc,reg:#\<inc\>$#src#'
@@ -37,6 +41,7 @@ else
   let g:alternateExtensions_txx = "h,hxx"
 endif
 
+" ######################################################################
 " Buffer-local Definitions {{{1
 " Avoid local reinclusion {{{2
 if &cp || (exists("b:loaded_ITKnOTB_vimrc_local")
@@ -51,7 +56,7 @@ set cpo&vim
 
 let s:script = expand("<sfile>:p")
 
-" ======================[ Detect Component {{{2
+" ======================[ Check for excluded files => abort {{{2
 if empty(s:currently_edited_file)
     let s:currently_edited_file = getcwd()
 endif
@@ -66,11 +71,120 @@ if s:rel_path_to_current !~ 'ITK\|OTB'
     call lh#log#this('Not ITK/OTB, aborting')
     finish
 endif
-if !lh#project#is_in_a_project()
+" if !lh#project#is_in_a_project()
+  " finish
+" endif
+
+" ======================[ Commun stuff {{{2
+runtime autoload/lh/project.vim
+
+if lh#project#is_in_a_project() && ! get(g:, 'force_reload_ITKnOTB_vimrc_local', 0)
   finish
 endif
+
+call lh#let#unlet('b:'.g:lh#project#varname)
+call lh#project#define(s:, { 'name': 'ITK_OTB', 'auto_discover_root':0 }, 'project_common')
+
+"TODO:
+"- recognize when the project already existed
+"  => don't execute the LetTo & co
+"- and this at common + at component (OTB, ITK) level
+
+" ----------------------[ Project's style {{{3
+" ---[ Style
+silent! source <sfile>:p:h/_vimrc_cpp_style.vim
+" ---[ Templates
+" Where templates related to the project will be stored. You'll have to
+" adjust the number of ':h', -> :h expand()
+call lh#let#to('p:mt_templates_paths', s:config_dir.'/templates')
+
+"-----------------------[ &path {{{2
+" don't search into included file how to complete
+LetTo p:&complete-=i
+"
+" ----------------------[ tags generation {{{2
+" Be sure tags are automatically updated on the current file
+LetIfUndef p:tags_options.no_auto 0
+" Declare the indexed filetypes
+call lh#tags#add_indexed_ft('c', 'cpp')
+" Register ITK/OTB extensions as C++ extensions
+call lh#tags#set_lang_map('cpp', '+.txx')
+
+" TODO: projectify these pathnames
+" You'll have to generate thoses files for your system...
+let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/stl.tags')
+let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/boost.tags')
+" ITK and OTB
+let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/ossim/ossim/src/tags')
+" let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/itk.tags')
+" let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/otb.tags')
+
+" ======================[ Settings for compil_hints {{{2
+LetTo p:compil_hints_autostart = 1
+
+" ----------------------[ Settings for BTW {{{2
+let s:BTW_substitute_names = [
+      \     ['VariableLengthVector<', 'VLV<'],
+      \     ['VariableLengthVectorExpression', 'VLVEB'],
+      \     ['VariableLengthVectorUnaryExpression', 'VLVEU'],
+      \     ['ossimplugins', 'O']
+      \ ]
+call lh#let#if_undef('p:BTW.substitute_filenames', s:BTW_substitute_names)
+QFImport BTW_substitute_names
+BTW addlocal substitute_filenames
+
+if SystemDetected() == 'msdos'
+  :BTW setlocal cmake
+  " echomsg SystemDetected()
+  if SystemDetected() == 'unix' " cygwin
+    " then cygwin's cmake does not work -> use win32 cmake
+    let $PATH=substitute($PATH, '\(.*\);\([^;]*CMake[^;]*\)', '\2;\1', '')
+    BTW addlocal cygwin
+  endif
+endif
+:BTW addlocal STLFilt
+
+LetIfUndef p:BTW.executable.type 'ctest'
+" sets p:BTW.executable.rule
+if ! g:BTW.use_project
+  call g:{s:component_varname}_config_menu.def_ctest_targets.set_ctest_argument()
+else
+  " TODO!!
+endif
+
+LetIfUndef p:BTW.target = ''
+if g:BTW.use_project
+  let s:project_config = {
+        \ 'type': 'ccmake',
+        \ 'arg': lh#ref#bind('p:paths.sources'),
+        \ 'wd' : lh#ref#bind('p:BTW.compilation_dir')
+        \ }
+else
+  let s:project_config = {
+        \ 'type': 'ccmake',
+        \ 'arg': (s:project_sources_dir),
+        \ 'wd' : lh#ref#bind('p:BTW.compilation_dir'),
+        \ '_'  : g:{s:component_varname}_config
+        \ }
+endif
+call lh#let#if_undef('p:BTW.project_config', s:project_config)
+
+"
+" Specialized stuff:
+" - tags destination
+" - BTW compilation stuff
+"
+
+
+" ======================[ Detect Component {{{2
+" I have only one set of configuration files but actually several projects:
+" ITK, OTB, and sometimes other proprietary projects that depends on them.
+"
 let s:component_name = matchstr(s:rel_path_to_current, '[^/\\]*')
 let s:component_varname = substitute(s:component_name, '[^a-zA-Z0-9_]', '_', 'g')
+
+let s:opt = { 'name': s:component_name }
+call lh#project#define(s:, s:opt, s:component_varname)
 
 call lh#let#to('p:component_name', s:component_name)
 call lh#let#to('p:component_varname', s:component_varname)
@@ -86,36 +200,30 @@ if ! (exists("s:loaded_".s:component_varname)
 endif
 
 " ======================[ &path {{{2
-" don't search into included file how to complete
-setlocal complete-=i
 
 " No sub project
 " let b:project_crt_sub_project = matchstr(lh#path#strip_common([g:{s:component_varname}_config.paths.trunk, expand('%:p:h')])[1], '[^/\\]*[/\\][^/\\]*')
 
-if ! g:BTW_use_project
+if ! g:BTW.use_project
   " Tells BTW the compilation directory
   call lh#let#to('p:BTW.compilation_dir', g:{s:component_varname}_config.paths._build)
   l
 endif
-" Was: let b:BTW_compilation_dir = g:{s:component_varname}_config.paths._build
 
 " Local vimrc variable for source dir
 " Will be simplified eventually to use p:paths.sources everywhere
-if g:BTW_use_project
+if g:BTW.use_project
   let s:project_sources_dir = lh#option#get('paths.sources')
 else
   let s:project_sources_dir =  g:{s:component_varname}_config.paths.sources
 endif
 call lh#let#to('p:project_sources_dir', s:project_sources_dir)
-" Was: let b:project_sources_dir = g:{s:component_varname}_config.paths.sources
 
 " Option for Mu-Template-> |s:path_from_root()|
-" Was: let b:sources_root = g:{s:component_varname}_config.paths.sources
 " Now: p:paths.sources is enough!
 
 " Used by mu-template to generate file headers and header-gates.
 call lh#let#to('p:cpp_included_paths', [s:project_sources_dir])
-"Was: let b:cpp_included_paths = [b:project_sources_dir]
 
 " If the project has .h.in files that are generated in the build
 " directory, uncomment the next line
@@ -125,7 +233,6 @@ call lh#let#to('p:cpp_included_paths', [s:project_sources_dir])
 call lh#let#to('p:includes',
       \ [ s:project_sources_dir . '/**'
       \ , lh#option#get('BTW.compilation_dir') . '/**'])
-" Was: let b:includes = [ b:project_sources_dir . '/**']
 "      For config.h.in files and alike
 "      let b:includes += [lh#option#get(BTW.compilation_dir) . '/**']
 " todo: adapt it automatically to the current compilation dir
@@ -163,7 +270,6 @@ endfunction
 exe 'set path+='.lh#path#fix(lh#option#get('BTW.compilation_dir')).'/**'
 " If the project has .h.in files that are generated in the build
 " directory, uncomment the next line
-" Was: exe 'setlocal path+='.lh#path#fix(b:project_sources_dir).'/**'
 " source dir are automatically added thanks to lh-tags v2
 for p in lh#option#get('includes')
   if p !~ '^/usr'
@@ -176,84 +282,16 @@ if 0
   let b:gcov_files_path = g:{s:component_varname}_config.paths.sources.'/obj/debug/Testing/CoverageInfo'
 endif
 
-" ======================[ Settings for BTW {{{2
-let b:BTW_substitute_names = [
-      \     ['VariableLengthVector<', 'VLV<'],
-      \     ['VariableLengthVectorExpression', 'VLVEB'],
-      \     ['VariableLengthVectorUnaryExpression', 'VLVEU'],
-      \     ['ossimplugins', 'O']
-      \ ]
-QFImport BTW_substitute_names
-BTW addlocal substitute_filenames
-
-if SystemDetected() == 'msdos'
-  :BTW setlocal cmake
-  " echomsg SystemDetected()
-  if SystemDetected() == 'unix' " cygwin
-    " then cygwin's cmake does not work -> use win32 cmake
-    let $PATH=substitute($PATH, '\(.*\);\([^;]*CMake[^;]*\)', '\2;\1', '')
-    BTW addlocal cygwin
-  endif
-endif
-:BTW addlocal STLFilt
-" silent! unlet b:BTW_project_executable
-LetIfUndef p:BTW.executable.type 'ctest'
-" sets p:BTW.executable.rule
-if ! g:BTW_use_project
-  call g:{s:component_varname}_config_menu.def_ctest_targets.set_ctest_argument()
-else
-  " TODO!!
-endif
-
-LetIfUndef p:BTW.target = ''
-if g:BTW_use_project
-  let s:project_config = {
-        \ 'type': 'ccmake',
-        \ 'arg': (s:project_sources_dir),
-        \ 'wd' : lh#ref#bind('p:BTW.compilation_dir')
-        \ }
-else
-  let s:project_config = {
-        \ 'type': 'ccmake',
-        \ 'arg': (s:project_sources_dir),
-        \ 'wd' : lh#ref#bind('p:BTW.compilation_dir'),
-        \ '_'  : g:{s:component_varname}_config
-        \ }
-endif
-call lh#let#if_undef('p:BTW.project_config', s:project_config)
-
 " ======================[ tags generation {{{2
-" Be sure tags are automatically updated on the current file
-LetIfUndef p:tags_options.no_auto 0
-" Declare the indexed filetypes
-call lh#tags#add_indexed_ft('c', 'cpp')
+" TODO: This may need to be done elsewhere: once per buffer
 " Update Vim &tags option w/ the tag file produced for the current project
 call lh#tags#update_tagfiles() " uses BTW_project_config
-" Register ITK/OTB extensions as C++ extensions
-call lh#tags#set_lang_map('cpp', '+.txx')
+
 " Instruct to ignore spelling of code constructs
 call lh#tags#ignore_spelling()
 
-if SystemDetected() != 'msdos'
-  " You'll have to generate thoses files for your system...
-  let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/stl.tags')
-  let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/boost.tags')
-  " ITK and OTB
-  let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/ossim/ossim/src/tags')
-  " let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/itk.tags')
-  " let &l:tags=lh#path#munge(&l:tags, $HOME.'/dev/tags/otb.tags')
-endif
-
-" ======================[ Settings for compil_hints {{{2
-let b:compil_hints_autostart = 1
-
 " ======================[ Project's style {{{2
-silent! source <sfile>:p:h/_vimrc_cpp_style.vim
 let s:ns = lh#let#to('p:cpp_project_namespace', tolower(s:component_varname))
-" Where templates related to the project will be stored. You'll have to
-" adjust the number of ':h', -> :h expand()
-" let b:mt_templates_paths = fnamemodify(s:project_sources_dir, ":h").'/templates'
-let b:mt_templates_paths = s:config_dir.'/templates'
 " Expecting your project has a Â«project_nsÂ»::Exception type
 call lh#let#to('p:exception_type', s:ns.'::Exception')
 
@@ -275,11 +313,12 @@ call lh#menu#make('nic', '50.76', '&Project.Edit local &vimrc', '<localleader>le
 
 " ======================[ Local variables to automagically import in QuickFix buffer {{{2
 QFImport tags_select
-QFImport &path
-QFImport BTW_project_target
-QFImport BTW_compilation_dir
-QFImport BTW_project_config
-QFImport includes
+" QFImport &path
+" QFImport BTW_project_target
+" QFImport BTW_compilation_dir
+" QFImport BTW_project_config
+" QFImport includes
+QFImport b:crt_project
 
 " ======================[ Other commands {{{2
 command! -b -nargs=* LVEcho echo <sid>Echo(<args>)

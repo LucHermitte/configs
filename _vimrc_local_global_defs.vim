@@ -3,7 +3,7 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
 let s:k_version = 001
 " Created:      04th Jun 2015
-" Last Update:26th Oct 2016
+" Last Update:28th Oct 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -25,7 +25,7 @@ let s:sources_dir = s:script_dir.'/'.s:component_name
 
 " unlet g:{s:component_varname}_config
 " Mandatory Project options
-if ! g:BTW_use_project
+if ! g:BTW.use_project
   call lh#let#if_undef('g:'.s:component_varname.'_config.paths.trunk', s:sources_dir)
   call lh#let#if_undef('g:'.s:component_varname.'_config.name',        s:component_varname)
   call lh#let#if_undef('g:'.s:component_varname.'_config.paths.project', fnamemodify(g:{s:component_varname}_config.paths.trunk,':h:h'))
@@ -72,7 +72,7 @@ function! s:EditLocalCMakeFile(...)
   call lh#buffer#jump(file, where.'sp')
 endfunction
 
-if ! g:BTW_use_project
+if ! g:BTW.use_project
   call lh#let#if_undef ('g:'.s:component_varname.'_config.functions',
         \ {'EditLocalCMakeFile': function(s:getSNR('EditLocalCMakeFile'))})
 else
@@ -87,7 +87,7 @@ let g:{s:component_varname}_config_menu = {
       \ 'menu': {'priority': s:menu_priority, 'name': s:menu_name}
       \ }
 call lh#let#to('p:BTW.config.menu', g:{s:component_varname}_config_menu)
-if ! g:BTW_use_project
+if ! g:BTW.use_project
   let s:cmake_integration = []
   let s:cmake_integration += [ 'auto_detect_compil_modes' ]
   " let s:cmake_integration += [ 'def_toggable_compil_mode' ]
