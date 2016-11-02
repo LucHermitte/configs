@@ -2,9 +2,9 @@
 "=============================================================================
 " File:         dev/(ITK|OTB)/_vimrc_local.vim  {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
-let s:k_version = 188
+let s:k_version = 192
 " Created:      04th Jun 2015
-" Last Update:28th Oct 2016
+" Last Update:02nd Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Definition of vim's local options for the projects ITK and OTB
@@ -83,10 +83,12 @@ if lh#project#is_in_a_project() && ! get(g:, 'force_reload_ITKnOTB_vimrc_local',
 endif
 
 call lh#let#unlet('b:'.g:lh#project#varname)
-call lh#project#define(s:, { 'name': 'ITK_OTB', 'auto_discover_root':0 }, 'project_common')
+" "abstract" tells that the current (common) project isn't compilable => the
+" &makeprg option won't be set at its level
+call lh#project#define(s:, { 'name': 'ITK_OTB', 'auto_discover_root':0, 'abstract': 1 }, 'project_common')
 
 "TODO:
-"- recognize when the project already existed
+"- recognize when the project already exists
 "  => don't execute the LetTo & co
 "- and this at common + at component (OTB, ITK) level
 
