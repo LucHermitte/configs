@@ -3,7 +3,7 @@
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
 let s:k_version = 001
 " Created:      04th Jun 2015
-" Last Update:28th Oct 2016
+" Last Update:10th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       «description»
@@ -40,11 +40,10 @@ if ! g:BTW.use_project
   call lh#let#if_undef('g:'.s:component_varname.'_config.tests.verbosity', '-VV')
 
 else
-  let s:trunk = lh#let#if_undef('p:paths.trunk', s:sources_dir)
   call lh#let#if_undef('p:BTW.config.name', s:component_name)
-  call lh#let#if_undef('p:paths.project', fnamemodify(s:trunk, ':h:h'))
+  call lh#let#if_undef('p:paths.project', fnamemodify(s:sources_dir, ':h:h'))
   call lh#let#if_undef('p:paths.build_root_dir', 'build/'.s:component_name)
-  call lh#let#if_undef('p:BTW.compilation.mode', 'reldeb')
+  call lh#let#if_undef('p:BTW.build.mode.current', 'reldeb')
   call lh#let#if_undef('p:BTW.tests.verbosity', '-VV')
   " call lh#let#if_undef('p:BTW.tests.test_regex', '')
 endif

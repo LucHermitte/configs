@@ -5,7 +5,7 @@
 " Version:      0.0.1.
 let s:k_version = 001
 " Created:      04th Jun 2015
-" Last Update:27th Oct 2016
+" Last Update:10th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Definition of vim's local options for the project ITK
@@ -14,12 +14,12 @@ let s:k_version = 001
 " Installation:
 "       The file must be present in a directory parent of every directories
 "       where the definitions must apply.
-" History:      Â«historyÂ»
-" TODO:         Â«missing featuresÂ»
+" History:      «history»
+" TODO:         «missing features»
 " }}}1
 "=============================================================================
 
-let s:script_dir = expand('<sfile>:p:h')
+" let s:script_dir = expand('<sfile>:p:h')
 " ======================[ Project's style ]===================
 
 " This file is meant to be included by a local .vimrc
@@ -130,7 +130,7 @@ LetIfUndef p:cpp_naming_strip_setter = 'Set\u&'         " SetName(value)
 " - new lines or not to introduce getter code
 " LetIfUndef p:cpp_refactor_getter_open  = ' { '  " default
 " LetIfUndef p:cpp_refactor_getter_close = '}'
-" LetIfUndef p:cpp_refactor_getter_open  = ' {\n' " Ã  la Java
+" LetIfUndef p:cpp_refactor_getter_open  = ' {\n' " à la Java
 " LetIfUndef p:cpp_refactor_getter_close = '\n}'
 " LetIfUndef p:cpp_refactor_getter_open  = '\n{\n' " everything on a separate line
 " LetIfUndef p:cpp_refactor_getter_close = '\n}'
@@ -141,7 +141,7 @@ LetIfUndef p:cpp_naming_strip_setter = 'Set\u&'         " SetName(value)
 " - new lines or not to introduce setter code
 " LetIfUndef p:cpp_refactor_setter_open  = ' { '  " default
 " LetIfUndef p:cpp_refactor_setter_close = '}'
-" LetIfUndef p:cpp_refactor_setter_open  = ' {\n' " Ã  la Java
+" LetIfUndef p:cpp_refactor_setter_open  = ' {\n' " à la Java
 " LetIfUndef p:cpp_refactor_setter_close = '\n}'
 " LetIfUndef p:cpp_refactor_setter_open  = '\n{\n' " everything on a separate line
 " LetIfUndef p:cpp_refactor_setter_close = '\n}'
@@ -175,26 +175,24 @@ LetIfUndef p:cpp_ShowDefaultParam      = 1
 " Preference regarding where functions definitions are written
 "
 " Possible Values:
-"   0: At the end of the file plus offset g:cpp_FunctionPosArg
-"   1: Search for a specific pattern g:cpp_FunctionPosArg
+"   0: At the end of the file plus offset (bpg):cpp_FunctionPosArg -- default
+"   1: Search for a specific pattern (bpg):cpp_FunctionPosArg
 "      Useful if you use template skeletons
-"   2: Call a user specified function : g:cpp_FunctionPosArg
+"   2: Call a user specified function : (bpg):cpp_FunctionPosArg
 "      Beware! This is a (security) back door.
 "   3: Store the value in a temporary variable ; to be used in conjunction
 "      with :PASTEIMPL -- Robert Kelly IV's approach
-LetIfUndef p:cpp_FunctionPosition = 2
-LetIfUndef p:cpp_FunctionPosArg   = 0
+" LetIfUndef p:cpp_FunctionPosition = 0
+" LetIfUndef p:cpp_FunctionPosArg   = 0
 
 " ## ======================[ Misc {{{1
-" Write each '(' on a new line; -> if \n() ... {}
-" LetIfUndef p:c_nl_before_bracket                  = 0
+" ¿ Write each '(' on a new line ? -> if \n() ... {}
 AddStyle -b ( (
   " ))
-" Write each '{' on a new line; -> if ...() \n {}
-" LetIfUndef p:c_nl_before_curlyB                   = 0
+" ¿ Write each '{' on a new line ? -> if ...() \n {}
 AddStyle {  -b -ft=c -prio=10 \n{\n
   " }}
-" Write each "namespace Foo {" on a same line
+" ¿ Write each "namespace Foo {" on a same line ?
 LetIfUndef p:cpp_multiple_namespaces_on_same_line = 1
 
 " ## ======================[ Expansion of function snippets {{{1
