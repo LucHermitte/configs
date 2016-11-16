@@ -2,9 +2,9 @@
 "=============================================================================
 " File:         dev/(ITK|OTB)/_vimrc_local.vim  {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
-let s:k_version = 233
+let s:k_version = 259
 " Created:      04th Jun 2015
-" Last Update:15th Nov 2016
+" Last Update:16th Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Definition of vim's local options for the projects ITK and OTB
@@ -232,36 +232,27 @@ let s:cpp_included_paths = lh#let#to('p:cpp_included_paths', [s:project_sources_
 " directory, uncomment the next line
 " let s:cpp_included_paths += [lh#option#get('BTW.compilation_dir')]
 
-" Configures lh-cpp complete includes sub-plugin -> ftplugin/c/c_AddInclude.vim
+" Configures lh-cpp complete includes sub-plugin -> ftplugin/c/c_complete_include.vim
+" -> :h i_CTRL-X_i
+" TODO:
+" - adapt it automatically to the current compilation dir
+" - find how to fetch include directories added with
+"   (target_)include_directories
+"   -> Cmake server-mode or json compilation database
+" For now:
+" - Fetch standard includes (hard coded in the compiler)
+" - Fetch project specific includes
+" - Use all directories under the source directory (OTB and ITK use many
+"   -Isubpath -> '**') -- Other (best?) practices tell us to include
+"   "module1/sub_a/foobar.h" instead of "foobar.h". If you're in that
+"   case, remove the "'**'".
+" - Use all directories under the compilation directory (for files like
+"   config.h.in)
 call lh#let#to('p:includes',
+      \ lh#cpp#tags#compiler_includes() +
+      \ lh#cmake#get_includes() +
       \ [ lh#path#to_dirname(s:project_sources_dir) . '**'
-      \ , lh#path#to_dirname(lh#option#get('BTW.compilation_dir')) . '**'])
-"      For config.h.in files and alike
-"      let b:includes += [lh#option#get(BTW.compilation_dir) . '/**']
-" todo: adapt it automatically to the current compilation dir
-
-if SystemDetected() == 'unix'
-  " Add your 3rd party libraries used in the project here
-  call lh#path#add_path_if_exists('p:includes', $HOME.'/dev/boost/1_51_0/install/include/')
-  call lh#path#add_path_if_exists('p:includes', '/usr/local/include/**')
-  call lh#path#add_path_if_exists('p:includes', '/usr/include/**')
-endif
-
-" Fetch INCLUDED paths from cmake cache configuration, and merge every thing
-" into p:includes
-function! s:UpdateIncludesFromCmake()
-  try
-    let included_paths = lh#cmake#get_variables('INCLUDE')
-    call filter(included_paths, 'v:val.value!~"NOTFOUND"')
-    let cmake_paths = values(map(copy(included_paths), 'v:val.value'))
-    let includes = lh#option#get('includes') " reference to actual variable!
-    let includes += cmake_paths
-    call uniq(sort(includes))
-  catch /.*/
-    call lh#common#warning_msg(v:exception)
-  endtry
-endfunction
-call s:UpdateIncludesFromCmake()
+      \ , lh#path#to_dirname(lh#btw#compilation_dir()) . '**'])
 
 " Setting &path
 call s:{s:component_varname}.set('&path', '+='.lh#path#fix(lh#option#get('BTW.compilation_dir')).'/**')
