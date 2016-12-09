@@ -2,9 +2,9 @@
 "=============================================================================
 " File:         dev/(ITK|OTB)/_vimrc_local.vim  {{{1
 " Author:       Luc Hermitte <EMAIL:hermitte {at} c-s {dot} fr>
-let s:k_version = 259
+let s:k_version = 261
 " Created:      04th Jun 2015
-" Last Update:16th Nov 2016
+" Last Update:22nd Nov 2016
 "------------------------------------------------------------------------
 " Description:
 "       Definition of vim's local options for the projects ITK and OTB
@@ -133,7 +133,7 @@ let s:BTW_substitute_names = [
       \     ['VariableLengthVectorUnaryExpression', 'VLVEU'],
       \     ['ossimplugins', 'O']
       \ ]
-call lh#let#if_undef('p:BTW.substitute_filenames', s:BTW_substitute_names)
+call lh#let#if_undef('p:BTW.substitute_names', s:BTW_substitute_names)
 QFImport BTW_substitute_names
 BTW addlocal substitute_filenames
 
@@ -255,7 +255,7 @@ call lh#let#to('p:includes',
       \ , lh#path#to_dirname(lh#btw#compilation_dir()) . '**'])
 
 " Setting &path
-call s:{s:component_varname}.set('&path', '+='.lh#path#fix(lh#option#get('BTW.compilation_dir')).'/**')
+call s:{s:component_varname}.set('&path', '+='.lh#path#fix(lh#btw#compilation_dir()).'/**')
 " If the project has .h.in files that are generated in the build
 " directory, uncomment the next line
 " sources dir is automatically added thanks to lh-tags v2
